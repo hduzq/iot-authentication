@@ -255,7 +255,7 @@ end role
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-role relaycommandserver(RS,SD,AS,MA:agent,Kra:symmetric_key,Hash:hash_func,SND,RCV:channel(dy))
+role relayserver(RS,SD,AS,MA:agent,Kra:symmetric_key,Hash:hash_func,SND,RCV:channel(dy))
 played_by RS
 def=
 	local
@@ -291,7 +291,7 @@ def=
         SND4,RCV4,SND3,RCV3,SND2,RCV2,SND1,RCV1:channel(dy)
     composition
         device(SD,RS,AS,MA,DS,Kbind,Hash,SND1,RCV1) /\
-		relaycommandserver(RS,SD,AS,MA,Kra,Hash,SND4,RCV4) /\
+		relayserver(RS,SD,AS,MA,Kra,Hash,SND4,RCV4) /\
         authserver(AS,SD,RS,MA,DS,Kap,Kra,Hash,SND2,RCV2) /\
 		app(MA,SD,RS,AS,Kbind,Kap,Hash,SND3,RCV3)
 end role
