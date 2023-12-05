@@ -53,9 +53,9 @@ class AuthServer(protocol.Protocol):
 
     def init_db(self):
         self.connection = pymysql.connect(
-            host="localhost",
-            user='root',
-            password='123456',
+            host="rm-bp161s6e416ikp471co.mysql.rds.aliyuncs.com",
+            user='zq',
+            password='Zqzq1234',
             database='as',
             charset='utf8'
         )
