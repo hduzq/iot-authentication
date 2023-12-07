@@ -1,9 +1,16 @@
-2023-12-01 16:01:18,444 INFO test <module> [line:6]: b'12345'
-2023-12-01 16:17:22,565 INFO test <module> [line:6]: b'12345'
-2023-12-01 17:57:05,817 INFO AS main [line:328]: AS runs its local tcp client to connect with RS
-2023-12-01 17:57:05,818 INFO AS main [line:330]: the server hosted in AS is running
-2023-12-01 17:58:52,179 INFO AS main [line:328]: AS runs its local tcp client to connect with RS
-2023-12-01 17:58:52,180 INFO AS main [line:330]: the server hosted in AS is running
-2023-12-01 18:13:34,587 INFO test <module> [line:6]: b'12345'
-2023-12-01 18:13:56,216 INFO test <module> [line:6]: b'12345'
-2023-12-01 18:13:59,507 INFO test <module> [line:6]: b'12345'
+2023-12-07 10:56:46,124 INFO AS main [line:328]: AS runs its local tcp client to connect with RS
+2023-12-07 10:56:46,125 INFO AS main [line:330]: the server hosted in AS is running
+2023-12-07 10:57:13,919 INFO DEVICE startProtocol [line:180]: device's UDP server is running, port is 8001
+2023-12-07 10:57:13,919 INFO DEVICE main [line:511]: device's UDP server is running
+2023-12-07 11:02:20,092 INFO AS main [line:328]: AS runs its local tcp client to connect with RS
+2023-12-07 11:03:13,070 INFO AS main [line:330]: the server hosted in AS is running
+2023-12-07 11:04:04,515 INFO AS main [line:328]: AS runs its local tcp client to connect with RS
+2023-12-07 11:04:05,753 INFO AS main [line:330]: the server hosted in AS is running
+2023-12-07 11:10:24,191 INFO AS main [line:328]: AS runs its local tcp client to connect with RS
+2023-12-07 11:10:25,472 INFO AS main [line:330]: the server hosted in AS is running
+2023-12-07 11:16:06,523 INFO AS main [line:330]: the server hosted in AS is running
+2023-12-07 11:17:02,043 INFO DEVICE connectionMade [line:128]: The connection between Device and AS is successful
+2023-12-07 11:17:02,049 INFO DEVICE compose_data [line:128]: 发送长度为95的消息:{'c': 301, 'o': b'proddevice', 'e': b"\x81y\x8c\xdfr\xe2\x0f\xf6\xf3i\xf3\x14\x8e\xa6`'\x1e.\xf0\xd9\xde9\xd7e-\xe6\xb0\xcc\xdb\x12\x90\xff\xdd\x13\xc4\xcf\xd7\xcbS\x8c{\xdf\x1e\xd7\xb3\x82\x1a\xf1"}
+2023-12-07 11:17:43,684 INFO AS connectionMade [line:65]: the address of the client is: IPv4Address(type='TCP', host='127.0.0.1', port=50027)
+2023-12-07 11:19:48,131 INFO AS dataReceived [line:68]: b"\x80\x04\x95T\x00\x00\x00\x00\x00\x00\x00}\x94(\x8c\x01c\x94M-\x01\x8c\x01o\x94C\nproddevice\x94\x8c\x01e\x94C0\x81y\x8c\xdfr\xe2\x0f\xf6\xf3i\xf3\x14\x8e\xa6`'\x1e.\xf0\xd9\xde9\xd7e-\xe6\xb0\xcc\xdb\x12\x90\xff\xdd\x13\xc4\xcf\xd7\xcbS\x8c{\xdf\x1e\xd7\xb3\x82\x1a\xf1\x94u."
+2023-12-07 11:19:48,994 INFO AS analyze_rec_data [line:135]: 对301消息的解析结果:{'c': 301, 'o': b'proddevice', 'e': b"\x81y\x8c\xdfr\xe2\x0f\xf6\xf3i\xf3\x14\x8e\xa6`'\x1e.\xf0\xd9\xde9\xd7e-\xe6\xb0\xcc\xdb\x12\x90\xff\xdd\x13\xc4\xcf\xd7\xcbS\x8c{\xdf\x1e\xd7\xb3\x82\x1a\xf1"}

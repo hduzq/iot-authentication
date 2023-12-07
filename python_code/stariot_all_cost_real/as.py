@@ -324,8 +324,8 @@ class ASClientFactory(protocol.ClientFactory):
 
 
 def main():
-    reactor.connectTCP(RS_HOST, RS_PORT, ASClientFactory())  # AS runs its local tcp client to connect with RS
-    logger.info("AS runs its local tcp client to connect with RS")
+    # reactor.connectTCP(RS_HOST, RS_PORT, ASClientFactory())  # AS runs its local tcp client to connect with RS
+    # logger.info("AS runs its local tcp client to connect with RS")
     reactor.listenTCP(AS_PORT, DefaultServerFactory())
     logger.info("the server hosted in AS is running")
     reactor.run()
