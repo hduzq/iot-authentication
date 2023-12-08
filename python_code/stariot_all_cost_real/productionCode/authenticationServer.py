@@ -1,5 +1,3 @@
-import base64
-import json
 import os
 import pickle
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -46,7 +44,7 @@ class AuthenticationServer(protocol.Protocol):
         self.dh_encrypt_key = None
 
     def connectionMade(self):
-        #建立连接交换公钥
+        # 建立连接交换公钥
         public_key_bytes = self.private_key.public_key().public_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
@@ -55,13 +53,14 @@ class AuthenticationServer(protocol.Protocol):
             'code': 201,
             'message': public_key_bytes
         }
-        self.transport.write(base64.b64encode(pickle.dumps(dhMessage)))
+        self.transport.write(pickle.dumps(dhMessage))
 
     def dataReceived(self, data):
-        code = self.analyze_rec_data(data)['code']
-        data = self.analyze_rec_data(data)['message']
-        print(f"message from Device (dataRecevied): {data}")
-        print(f"shared_key : {self.shared_key}")
+        dict = self.analyze_rec_data(data)
+        code = dict['code']
+        data = dict['message']
+        # print(f"message from Device (dataRecevied): {data}")
+        # print(f"shared_key : {self.shared_key}")
         # 由具体的201 202 301 302代码处理，返回base64类型的数据
         sent_data = self.switch[code](data)
         if sent_data:
@@ -77,7 +76,7 @@ class AuthenticationServer(protocol.Protocol):
         self.generatedDHEncryptKey()
         result = {'code': 202, 'message': 'Server已产生shared_key'}
         result = self.dh_encrypt_message(result)
-        result = base64.b64encode(pickle.dumps(result))
+        # result = base64.b64encode(pickle.dumps(result))
         return result
 
     def dhKeyAccepted(self, data):
@@ -85,7 +84,7 @@ class AuthenticationServer(protocol.Protocol):
         print(f"Server已经产生shared_key: {self.shared_key}")
         result = {'code': 302, 'message': '模拟正常通信'}
         result = self.dh_encrypt_message(result)
-        result = base64.b64encode(pickle.dumps(result))
+        # result = base64.b64encode(pickle.dumps(result))
         return result
 
     def issueDeviceSecret(self, data):
@@ -93,10 +92,10 @@ class AuthenticationServer(protocol.Protocol):
 
     def normalCommunication(self, data):
         '''accepted code=302'''
-        print(f"Server is sending normalCommunication .......")
+        print(f"code: 302 Server is sending normalCommunication .......")
         data = {'code': 302, 'message': 'hello client from Server'}
         data = self.dh_encrypt_message(data)
-        data = base64.b64encode(pickle.dumps(data))
+        # data = base64.b64encode(pickle.dumps(data))
         print(f"服务器进行正常通信: {data}")
         return data
 
@@ -152,14 +151,15 @@ class AuthenticationServer(protocol.Protocol):
         return plaintext
 
     def analyze_rec_data(self, data):
-        print("Server analyze message..................")
+        #返回{code:202 ,message: xxxxx}
+        # print("Server analyze message..................")
         if self.dh_encrypt_key:
-            # 前两行用于
-            data = base64.b64decode(data)
-            data = pickle.loads(data)
+            # 有加密情况不需要base编码
+            # data = base64.b64decode(data)
+            # data = pickle.loads(data)
             data = self.dh_decrypt_message(data)
             return data
-        data = base64.b64decode(data)
+        # data = base64.b64decode(data)
         data = pickle.loads(data)
         return data
 
