@@ -31,59 +31,6 @@ def composeDeviceData():
     pass
 
 
-def encrypt_message(shared_key, plain_message):
-    '''generate encode message using shared key'''
-    derived_key = HKDF(
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=None,
-        info=b'handshake data',
-        backend=default_backend()
-    ).derive(shared_key)
-    encryption_key = derived_key
-    # 生成随机的初始化向量（IV）
-    iv = os.urandom(16)
-
-    # 创建加密器
-    cipher = Cipher(
-        algorithms.AES(encryption_key),
-        modes.CFB(iv),
-        backend=default_backend()
-    )
-    encryptor = cipher.encryptor()
-    # 加密消息
-    plain_message = pickle.dumps(plain_message)
-    ciphertext = encryptor.update(plain_message) + encryptor.finalize()
-    return iv + ciphertext
-
-
-def decrypt_message(encryption_key, iv_ciphertext):
-    # 分离IV和密文
-    iv, ciphertext = iv_ciphertext[:16], iv_ciphertext[16:]
-
-    # 创建解密器
-    cipher = Cipher(
-        algorithms.AES(encryption_key),
-        modes.CFB(iv),
-        backend=default_backend()
-    )
-    decryptor = cipher.decryptor()
-
-    # 解密消息
-    plaintext = decryptor.update(ciphertext) + decryptor.finalize()
-
-    return plaintext.decode()
-
-
-def analyze_rec_data(data):
-    print("Device analyze message.........")
-    if encryption_key:
-        data = decrypt_message(encryption_key, data)
-    data = base64.b64decode(data)
-    data = pickle.loads(data)
-    return data
-
-
 class Device(protocol.Protocol):
 
     def __init__(self):
@@ -94,7 +41,7 @@ class Device(protocol.Protocol):
             302: self.normalCommunication
         }
         self.shared_key = None
-
+        self.dh_encrypt_key = None
     def connectionMade(self):
         # compose_device_data = composeDeviceData()
         # self.transport.write(base64.b64encode(pickle.dumps(device_data_dict3)))
@@ -111,8 +58,8 @@ class Device(protocol.Protocol):
         self.transport.write(base64.b64encode(pickle.dumps(dhMessage)))
 
     def dataReceived(self, data: bytes):
-        code = analyze_rec_data(data)['code']
-        data = analyze_rec_data(data)['message']
+        code = self.analyze_rec_data(data)['code']
+        data = self.analyze_rec_data(data)['message']
         print(f"code:{code} message from Server (dataRecevied): {data}")
         print(f"shared_key : {self.shared_key}")
         sent_data = self.switch[code](data)
@@ -124,7 +71,9 @@ class Device(protocol.Protocol):
         server_public_key = data
         server_public_key = serialization.load_pem_public_key(server_public_key)
         self.shared_key = self.private_key.exchange(server_public_key)
+        self.generatedDHEncryptKey()
         result = {'code': 202, 'message': 'device已产生shared_key'}
+        result = self.dh_encrypt_message(result)
         result = base64.b64encode(pickle.dumps(result))
         return result
 
@@ -132,20 +81,71 @@ class Device(protocol.Protocol):
     def dhKeyAccepted(self, data):
         print(f"device已经产生shared_key: {self.shared_key}")
         result = {'code': 302, 'message': '模拟正常通信'}
+        result = self.dh_encrypt_message(result)
         result = base64.b64encode(pickle.dumps(result))
         return result
 
     # 处理302 的通信信息
     def normalCommunication(self, data):
         data = {'code': 302, 'message': 'hello server ---Client'}
+        data = self.dh_encrypt_message(data)
         data = base64.b64encode(pickle.dumps(data))
         print(f"客户端进行正常通信: {data}")
-        # get the dict type without dhkey encrypted
-        # sent_data = analyze_rec_data(data)
-        # encrypted the dict message
-        sent_data = encrypt_message(self.shared_key, data)
-        return sent_data
+        return data
 
+    def generatedDHEncryptKey(self):
+        derived_key = HKDF(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=None,
+            info=b'handshake data',
+            backend=default_backend()
+        ).derive(self.shared_key)
+        self.dh_encrypt_key = derived_key
+    def dh_encrypt_message(self, plain_message):
+        # 生成随机的初始化向量（IV）
+        iv = os.urandom(16)
+
+        # 创建加密器
+        cipher = Cipher(
+            algorithms.AES(self.dh_encrypt_key),
+            modes.CFB(iv),
+            backend=default_backend()
+        )
+        encryptor = cipher.encryptor()
+        # 加密消息
+        # plain_message=json.dumps(plain_message)
+        plain_message = pickle.dumps(plain_message)
+        ciphertext = encryptor.update(plain_message) + encryptor.finalize()
+        return iv + ciphertext
+
+    def dh_decrypt_message(self, iv_ciphertext):
+        # 分离IV和密文
+        iv, ciphertext = iv_ciphertext[:16], iv_ciphertext[16:]
+
+        # 创建解密器
+        cipher = Cipher(
+            algorithms.AES(self.dh_encrypt_key),
+            modes.CFB(iv),
+            backend=default_backend()
+        )
+        decryptor = cipher.decryptor()
+
+        # 解密消息
+        plaintext = decryptor.update(ciphertext) + decryptor.finalize()
+
+        return pickle.loads(plaintext)
+
+    def analyze_rec_data(self, data):
+        print("Server analyze message..................")
+        if self.dh_encrypt_key:
+            data = base64.b64decode(data)
+            data = pickle.loads(data)
+            data = self.dh_decrypt_message(data)
+            return data
+        data = base64.b64decode(data)
+        data = pickle.loads(data)
+        return data
 
 class DeviceFactory(protocol.ClientFactory):
 
