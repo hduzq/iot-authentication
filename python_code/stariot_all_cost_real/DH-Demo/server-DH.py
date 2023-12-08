@@ -7,10 +7,10 @@ from cryptography.fernet import Fernet
 import pickle
 import base64
 
-
 # 服务器端和客户端
 device_secret = b"device_secret_here"
 product_secret = b"product_secret_here"
+
 
 def load_parameters():
     with open('parameters.pkl', 'rb') as f:
@@ -19,8 +19,10 @@ def load_parameters():
     parameters = pn.parameters(default_backend())
     return parameters
 
+
 parameters = load_parameters()
 print(parameters)  # 可以对parameters进行任何你需要的操作
+
 
 class Echo(protocol.Protocol):
     def __init__(self):
@@ -55,9 +57,11 @@ class Echo(protocol.Protocol):
             encrypted_message = cipher_suite.encrypt(device_secret)
             self.transport.write(base64.b64encode(encrypted_message) + b'\n')
 
+
 class EchoFactory(protocol.Factory):
     def buildProtocol(self, addr):
         return Echo()
+
 
 reactor.listenTCP(8000, EchoFactory())
 reactor.run()
