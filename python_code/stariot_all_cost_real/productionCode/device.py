@@ -43,7 +43,8 @@ class Device(protocol.Protocol):
             201: self.dhExchange,
             202: self.dhKeyAccepted,
             301: self.requestDeviceSecret301,
-            302: self.normalCommunication
+            302: self.normalCommunication,
+            303: self.acceptDeviceSecret303
         }
         self.shared_key = None
         self.dh_encrypt_key = None
@@ -68,6 +69,8 @@ class Device(protocol.Protocol):
         dict = self.analyze_rec_data(data)
         code = dict['code']
         data = dict['message']
+        if code==303:
+            data=dict['Device_secret']
         # print(f"code:{code} message from Server (dataRecevied): {data}")
         # print(f"shared_key : {self.shared_key}")
         sent_data = self.switch[code](data)
@@ -88,21 +91,34 @@ class Device(protocol.Protocol):
     # code=202
     def dhKeyAccepted(self, data):
         print(f"device已经产生shared_key: {self.shared_key}")
-        result = {'code': 302, 'message': '模拟正常通信'}
+        result = {'code': 301, 'message': '模拟下发证书'}
         result = self.dh_encrypt_message(result)
         # result = base64.b64encode(pickle.dumps(result))
         return result
 
     def requestDeviceSecret301(self, data):
         '''需要返回一个直接用于发送的data'''
+        self.generateDSEncryptKey(PRODUCT_SECRET)
+        requestData={'code':301,'message':'******device id for DS********'}
+        dsCipher=self.ds_encrypt_message(requestData)
+        dhCipher=self.dh_encrypt_message(dsCipher)
+        return dhCipher
 
-        pass
+    def acceptDeviceSecret303(self,data):
+        DEVICE_SECRET_AREA1=data
+        #根据新的密钥加密数据
+        self.generateDSEncryptKey(DEVICE_SECRET_AREA1)
+        requestData={'code':401,'message':'Device开始利用ds进行加密通信'}
+        dsCipher = self.ds_encrypt_message(requestData)
+        dhCipher = self.dh_encrypt_message(dsCipher)
+        return dhCipher
+
 
     # 处理302 的通信信息
     def normalCommunication(self, data):
         data = {'code': 302, 'message': 'hello server ---Client'}
+        #ds加密
         data = self.dh_encrypt_message(data)
-        # data = pickle.dumps(data)
         print(f"客户端进行正常通信: {data}")
         return data
 
@@ -206,6 +222,8 @@ class Device(protocol.Protocol):
             # data = base64.b64decode(data)
             # data = pickle.loads(data)
             data = self.dh_decrypt_message(data)
+            if self.ds_encrypt_key:
+                data = self.ds_decrypt_message(data)
             return data
         # data = base64.b64decode(data)
         data = pickle.loads(data)

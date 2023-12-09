@@ -9,6 +9,12 @@ from cryptography.hazmat.primitives.asymmetric import dh
 from cryptography.hazmat.primitives import serialization, hashes
 from DataDemo import *
 
+SELECTED_SECRET_AREA = b'1'
+PRODUCT_SECRET = b'product_secret_1'
+DEVICE_SECRET_AREA1 = b'Device_secret_Area1'
+
+
+# DEVICE_SECRET_AREA2 = None
 
 def load_parameters():
     '''load Deffie-Hellman key parameters'''
@@ -37,11 +43,13 @@ class AuthenticationServer(protocol.Protocol):
         self.switch = {
             201: self.dhExchange,
             202: self.dhKeyAccepted,
-            301: self.issueDeviceSecret,
-            302: self.normalCommunication
+            301: self.issueDeviceSecret301,
+            302: self.normalCommunication,
+            401: self.communicationWithDS401
         }
         self.shared_key = None
         self.dh_encrypt_key = None
+        self.ds_encrypt_key = None
 
     def connectionMade(self):
         # 建立连接交换公钥
@@ -82,22 +90,31 @@ class AuthenticationServer(protocol.Protocol):
     def dhKeyAccepted(self, data):
         '''accepted code=202'''
         print(f"Server已经产生shared_key: {self.shared_key}")
-        result = {'code': 302, 'message': '模拟正常通信'}
+        self.generateDSEncryptKey(PRODUCT_SECRET)
+        result = {'code': 301, 'message': '模拟下发证书'}
         result = self.dh_encrypt_message(result)
         # result = base64.b64encode(pickle.dumps(result))
         return result
 
-    def issueDeviceSecret(self, data):
-        pass
+    def issueDeviceSecret301(self, data):
+        responseData = {'code': 303,
+                        'message': '******I can decode message********',
+                        'Device_secret':DEVICE_SECRET_AREA1}
+        dsCipher = self.ds_encrypt_message(responseData)
+        dhCipher = self.dh_encrypt_message(dsCipher)
+        self.generateDSEncryptKey(DEVICE_SECRET_AREA1)
+        return dhCipher
 
     def normalCommunication(self, data):
         '''accepted code=302'''
         print(f"code: 302 Server is sending normalCommunication .......")
         data = {'code': 302, 'message': 'hello client from Server'}
+        # ds加密
         data = self.dh_encrypt_message(data)
-        # data = base64.b64encode(pickle.dumps(data))
         print(f"服务器进行正常通信: {data}")
         return data
+    def communicationWithDS401(self,data):
+        print('Sever已经收到401消息')
 
     def generatedDHEncryptKey(self):
         derived_key = HKDF(
@@ -150,14 +167,64 @@ class AuthenticationServer(protocol.Protocol):
         plaintext = pickle.loads(plaintext)
         return plaintext
 
+    def generateDSEncryptKey(self, DeviceSecret):
+        '''根据ps ds派生出ds加密密钥'''
+        self.ds_encrypt_key = HKDF(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=None,
+            info=b'handshake data',
+            backend=default_backend()
+        ).derive(DeviceSecret)
+        return self.ds_encrypt_key
+
+    def ds_encrypt_message(self, plain_message):
+        '''利用ds_encrypt_key加密'''
+        # 生成随机的初始化向量（IV）
+        iv = os.urandom(16)
+
+        # 创建加密器
+        cipher = Cipher(
+            algorithms.AES(self.ds_encrypt_key),
+            modes.CFB(iv),
+            backend=default_backend()
+        )
+        encryptor = cipher.encryptor()
+        # 加密消息
+        # plain_message=json.dumps(plain_message)
+        plain_message = pickle.dumps(plain_message)
+        ciphertext = encryptor.update(plain_message) + encryptor.finalize()
+        return iv + ciphertext
+
+    def ds_decrypt_message(self, iv_ciphertext):
+        '''利用ds_encrypt_key解密'''
+        # 分离IV和密文
+        iv, ciphertext = iv_ciphertext[:16], iv_ciphertext[16:]
+
+        # 创建解密器
+        cipher = Cipher(
+            algorithms.AES(self.ds_encrypt_key),
+            modes.CFB(iv),
+            backend=default_backend()
+        )
+        decryptor = cipher.decryptor()
+
+        # 解密消息
+        plaintext = decryptor.update(ciphertext) + decryptor.finalize()
+
+        return pickle.loads(plaintext)
+
     def analyze_rec_data(self, data):
-        #返回{code:202 ,message: xxxxx}
+        # 返回{code:202 ,message: xxxxx}
         # print("Server analyze message..................")
+        # 如果ds密钥存在就利用ds密钥解除密
         if self.dh_encrypt_key:
             # 有加密情况不需要base编码
             # data = base64.b64decode(data)
             # data = pickle.loads(data)
             data = self.dh_decrypt_message(data)
+            if self.ds_encrypt_key:
+                data = self.ds_decrypt_message(data)
             return data
         # data = base64.b64decode(data)
         data = pickle.loads(data)
