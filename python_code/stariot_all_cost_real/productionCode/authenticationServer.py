@@ -1,5 +1,6 @@
 import os
 import pickle
+import time
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from twisted.internet import protocol
@@ -64,6 +65,11 @@ class AuthenticationServer(protocol.Protocol):
         self.transport.write(pickle.dumps(dhMessage))
 
     def dataReceived(self, data):
+
+        # 用于评估通信开销
+        bytes_length = len(data)
+        print(f"Received {bytes_length} bytes")
+
         dict = self.analyze_rec_data(data)
         code = dict['code']
         data = dict['message']
@@ -89,7 +95,7 @@ class AuthenticationServer(protocol.Protocol):
 
     def dhKeyAccepted(self, data):
         '''accepted code=202'''
-        print(f"Server已经产生shared_key: {self.shared_key}")
+        #print(f"Server已经产生shared_key: {self.shared_key}")
         self.generateDSEncryptKey(PRODUCT_SECRET)
         result = {'code': 301, 'message': '模拟下发证书'}
         result = self.dh_encrypt_message(result)
@@ -99,7 +105,7 @@ class AuthenticationServer(protocol.Protocol):
     def issueDeviceSecret301(self, data):
         responseData = {'code': 303,
                         'message': '******I can decode message********',
-                        'Device_secret':DEVICE_SECRET_AREA1}
+                        'Device_secret': DEVICE_SECRET_AREA1}
         dsCipher = self.ds_encrypt_message(responseData)
         dhCipher = self.dh_encrypt_message(dsCipher)
         self.generateDSEncryptKey(DEVICE_SECRET_AREA1)
@@ -113,7 +119,8 @@ class AuthenticationServer(protocol.Protocol):
         data = self.dh_encrypt_message(data)
         print(f"服务器进行正常通信: {data}")
         return data
-    def communicationWithDS401(self,data):
+
+    def communicationWithDS401(self, data):
         print('Sever已经收到401消息')
 
     def generatedDHEncryptKey(self):
@@ -181,6 +188,10 @@ class AuthenticationServer(protocol.Protocol):
     def ds_encrypt_message(self, plain_message):
         '''利用ds_encrypt_key加密'''
         # 生成随机的初始化向量（IV）
+
+        # Start timer
+        start_time = time.time_ns()
+
         iv = os.urandom(16)
 
         # 创建加密器
@@ -194,6 +205,14 @@ class AuthenticationServer(protocol.Protocol):
         # plain_message=json.dumps(plain_message)
         plain_message = pickle.dumps(plain_message)
         ciphertext = encryptor.update(plain_message) + encryptor.finalize()
+
+        # End timer
+        end_time = time.time_ns()
+        # Calculate execution time in nanoseconds
+        execution_time_ns = end_time - start_time
+
+        print(f" 'ds_encrypt_message' Execution time: {execution_time_ns} ns")
+
         return iv + ciphertext
 
     def ds_decrypt_message(self, iv_ciphertext):
