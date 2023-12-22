@@ -65,6 +65,8 @@ class AuthenticationServer(protocol.Protocol):
         self.transport.write(pickle.dumps(dhMessage))
 
     def dataReceived(self, data):
+        # Start timer
+        start_time = time.time_ns()
 
         # 用于评估通信开销
         bytes_length = len(data)
@@ -79,6 +81,12 @@ class AuthenticationServer(protocol.Protocol):
         sent_data = self.switch[code](data)
         if sent_data:
             self.transport.write(sent_data)
+
+            # End timer
+        end_time = time.time_ns()
+        # Calculate execution time in nanoseconds
+        execution_time_ns = end_time - start_time
+        print(f" 'dataReceived' Execution time: {execution_time_ns} ns")
         return
 
     def dhExchange(self, data):
