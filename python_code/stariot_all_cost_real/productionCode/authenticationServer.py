@@ -54,6 +54,7 @@ class AuthenticationServer(protocol.Protocol):
         self.shared_key = None
         self.dh_encrypt_key = None
         self.ds_encrypt_key = None
+        # self.initial_memory_used=None
 
     def connectionMade(self):
         # 建立连接交换公钥
@@ -65,7 +66,7 @@ class AuthenticationServer(protocol.Protocol):
             'code': 201,
             'message': public_key_bytes
         }
-        log_performance_data("After connectionMade")
+        # self.initial_memory_used = psutil.virtual_memory().used
         self.transport.write(pickle.dumps(dhMessage))
 
     def dataReceived(self, data):
@@ -131,7 +132,6 @@ class AuthenticationServer(protocol.Protocol):
         # ds加密
         data = self.dh_encrypt_message(data)
         print(f"服务器进行正常通信: {data}")
-        log_performance_data("After normalCommunication -----authenticationServer")
         return data
 
     def communicationWithDS401(self, data):
@@ -282,6 +282,7 @@ def print_initial_resource_usage():
     print(f"Initial CPU Usage: {cpu_usage}%, Initial Memory Usage: {memory_usage}%")
 
 print_initial_resource_usage()
+initial_memory_used=psutil.virtual_memory().used
 
 
 def print_resource_usage(event):
@@ -292,17 +293,21 @@ def print_resource_usage(event):
 #步骤1: 收集和存储数据
 #每当进行性能监控时，将数据追加到CSV文件中。
 def log_performance_data(event):
+    file_exists = os.path.isfile('performance_data.csv') and os.path.getsize('performance_data.csv') > 0
     with open('performance_data.csv', 'a', newline='') as csvfile:
         fieldnames = ['timestamp', 'event', 'cpu_usage', 'memory_usage']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
+        if not file_exists:
+            writer.writeheader()
         data = {
             'timestamp': time.strftime("%Y-%m-%d %H:%M:%S"),
             'event': event,
             'cpu_usage': psutil.cpu_percent(),
-            'memory_usage': psutil.virtual_memory().used
+            'memory_usage': psutil.virtual_memory().used-initial_memory_used
         }
-        writer.writerow(data)
+        if data['cpu_usage']>0:
+            writer.writerow(data)
 
 reactor.listenTCP(8003, AuthenticationServerFactory())
 print("Authen Server is running on port 8003")

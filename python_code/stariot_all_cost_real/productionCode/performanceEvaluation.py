@@ -8,6 +8,6 @@ def run_client_thread():
     start_client()
 
 # 启动多个线程
-for i in range(1000):  # 假设你想启动5个线程
+for i in range(3000):  # 假设你想启动5个线程
     t = threading.Thread(target=run_client_thread)
     t.start()

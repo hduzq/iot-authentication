@@ -13,7 +13,7 @@ from DataDemo import *
 
 SELECTED_SECRET_AREA = b'1'
 PRODUCT_SECRET = b'product_secret_1'
-DEVICE_SECRET_AREA1 = None
+DEVICE_SECRET_AREA1 = b'Device_secret_Area1'
 DEVICE_SECRET_AREA2 = None
 
 
@@ -45,11 +45,13 @@ class Device(protocol.Protocol):
             202: self.dhKeyAccepted,
             301: self.requestDeviceSecret301,
             302: self.normalCommunication,
-            303: self.acceptDeviceSecret303
+            303: self.acceptDeviceSecret303,
+            401: self.communicationWithDS401
         }
         self.shared_key = None
         self.dh_encrypt_key = None
         self.ds_encrypt_key = None
+        self.count=0
 
     def connectionMade(self):
         # compose_device_data = composeDeviceData()
@@ -134,6 +136,20 @@ class Device(protocol.Protocol):
         data = self.dh_encrypt_message(data)
         print(f"客户端进行正常通信: {data}")
         return data
+
+    def communicationWithDS401(self, data):
+        #一台设备一次模拟通信10次
+        self.count+=1
+        print('Client已经收到401消息')
+        responseData = {'code': 401,
+                        'message': '******communicationWithDS401********',
+                        'Device_secret': DEVICE_SECRET_AREA1}
+        dsCipher = self.ds_encrypt_message(responseData)
+        dhCipher = self.dh_encrypt_message(dsCipher)
+        self.generateDSEncryptKey(DEVICE_SECRET_AREA1)
+        if self.count==10:
+            return
+        return dhCipher
 
     def generatedDHEncryptKey(self):
         '''根据dh key派生出dh加密密钥'''
@@ -253,3 +269,4 @@ def start_client():
     reactor.connectTCP("localhost", 8003, DeviceFactory())
     print("Client is running and connected to localhost:8003")
     reactor.run()
+# start_client()

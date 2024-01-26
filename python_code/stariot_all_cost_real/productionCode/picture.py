@@ -7,7 +7,7 @@ df = pd.read_csv('performance_data.csv')
 print(df.head())
 
 # 基本的数据分析，例如计算每个事件的平均CPU和内存使用率
-average_usage = df.groupby('After connectionMade').mean()
+average_usage = df.groupby('event').mean()
 print(average_usage)
 
 
