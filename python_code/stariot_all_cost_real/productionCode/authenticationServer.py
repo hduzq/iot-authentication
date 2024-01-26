@@ -1,3 +1,4 @@
+import csv
 import os
 import pickle
 import time
@@ -9,6 +10,8 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import dh
 from cryptography.hazmat.primitives import serialization, hashes
 from DataDemo import *
+
+import psutil
 
 SELECTED_SECRET_AREA = b'1'
 PRODUCT_SECRET = b'product_secret_1'
@@ -62,6 +65,7 @@ class AuthenticationServer(protocol.Protocol):
             'code': 201,
             'message': public_key_bytes
         }
+        log_performance_data("After connectionMade")
         self.transport.write(pickle.dumps(dhMessage))
 
     def dataReceived(self, data):
@@ -87,6 +91,7 @@ class AuthenticationServer(protocol.Protocol):
         # Calculate execution time in nanoseconds
         execution_time_ns = end_time - start_time
         print(f" 'dataReceived' Execution time: {execution_time_ns} ns")
+        # print_resource_usage("After dataReceived -----authenticationServer")
         return
 
     def dhExchange(self, data):
@@ -126,10 +131,19 @@ class AuthenticationServer(protocol.Protocol):
         # ds加密
         data = self.dh_encrypt_message(data)
         print(f"服务器进行正常通信: {data}")
+        log_performance_data("After normalCommunication -----authenticationServer")
         return data
 
     def communicationWithDS401(self, data):
         print('Sever已经收到401消息')
+        responseData = {'code': 401,
+                        'message': '******communicationWithDS401********',
+                        'Device_secret': DEVICE_SECRET_AREA1}
+        dsCipher = self.ds_encrypt_message(responseData)
+        dhCipher = self.dh_encrypt_message(dsCipher)
+        self.generateDSEncryptKey(DEVICE_SECRET_AREA1)
+        log_performance_data("communicationWithDS401")
+        return dhCipher
 
     def generatedDHEncryptKey(self):
         derived_key = HKDF(
@@ -262,6 +276,33 @@ class AuthenticationServerFactory(protocol.Factory):
     def buildProtocol(self, addr):
         return AuthenticationServer()
 
+def print_initial_resource_usage():
+    cpu_usage = psutil.cpu_percent()
+    memory_usage = psutil.virtual_memory().percent
+    print(f"Initial CPU Usage: {cpu_usage}%, Initial Memory Usage: {memory_usage}%")
+
+print_initial_resource_usage()
+
+
+def print_resource_usage(event):
+    cpu_usage = psutil.cpu_percent()
+    memory_usage = psutil.virtual_memory().percent
+    print(f"{event} - CPU Usage: {cpu_usage}%, Memory Usage: {memory_usage}%")
+
+#步骤1: 收集和存储数据
+#每当进行性能监控时，将数据追加到CSV文件中。
+def log_performance_data(event):
+    with open('performance_data.csv', 'a', newline='') as csvfile:
+        fieldnames = ['timestamp', 'event', 'cpu_usage', 'memory_usage']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        data = {
+            'timestamp': time.strftime("%Y-%m-%d %H:%M:%S"),
+            'event': event,
+            'cpu_usage': psutil.cpu_percent(),
+            'memory_usage': psutil.virtual_memory().used
+        }
+        writer.writerow(data)
 
 reactor.listenTCP(8003, AuthenticationServerFactory())
 print("Authen Server is running on port 8003")
