@@ -269,4 +269,5 @@ def start_client():
     reactor.connectTCP("localhost", 8003, DeviceFactory())
     print("Client is running and connected to localhost:8003")
     reactor.run()
-# start_client()
+
+start_client()
