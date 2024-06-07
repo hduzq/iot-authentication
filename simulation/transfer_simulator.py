@@ -11,8 +11,8 @@ def file_transfer(env, file_size, bandwidth, transfer_id, network, reload_rate, 
     """
     global reset_number
     initial_file_size = file_size
-    transfer_time = file_size / bandwidth + 0.1  # 模拟双向通信延迟100ms 0.1s
-    # transfer_time = file_size / bandwidth
+    # transfer_time = file_size / bandwidth + 0.1  # 模拟双向通信延迟100ms 0.1s
+    transfer_time = file_size / bandwidth
     reload_rate = reload_rate / transfer_time  # 每次传输都有机会传错，近似模拟概率
     start_time = env.now
     print(f"Transfer {transfer_id} starting at {start_time:.2f}")
@@ -68,7 +68,7 @@ def monitor(env, monitor_event):
 
 # Simulation parameters
 totoal_bandwidth = 6.5  # Bandwidth in MB/s  such as 2.5MBps 20Mbps 6.5MBps 50Mbps
-num_transfers = 1000  # Number of simultaneous file transfers
+num_transfers = 1000  # Number of simultaneous file transfers 100 300 500 1000
 bandwidth = totoal_bandwidth / num_transfers  # Bandwidth in MB/s for each device
 file_size = 32.1  # Size of each file in MB
 reload_rate = 0.05  # Probability of packet loss
