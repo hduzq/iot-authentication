@@ -16,7 +16,7 @@ def file_transfer(transfer_id, file_size):
     
     start_time = env.now
     monitor.start_time = min(start_time, monitor.start_time)
-    print(f"Transfer {transfer_id} starting at {start_time:.2f}")
+    # print(f"Transfer {transfer_id} starting at {start_time:.2f}")
     remain_file_size = int(file_size)
 
     while remain_file_size > 0:
@@ -28,8 +28,9 @@ def file_transfer(transfer_id, file_size):
             yield req
         
             # Simulate packet loss
-            if random.uniform(0, 1) < packet_loss_rate:
-                print(f"Transfer {transfer_id}: Packet lost at {env.now:.2f}")
+            # 单次传输失败率=总失败率/传输次数 固件大小/每次传输大小=传输次数
+            if random.uniform(0, 1) < packet_loss_rate/(file_size/(obtained_bandwith*transfer_chunk_time)):
+                # print(f"Transfer {transfer_id}: Packet lost at {env.now:.2f}")
                 # Simulate retransmission delay
                 # 这里假设，如果失败了，就立即全部重传
                 remain_file_size = int(file_size)
@@ -39,7 +40,7 @@ def file_transfer(transfer_id, file_size):
                 # 正常的网络波动
                 if random.uniform(0, 1) < delay_prob:
                     delay = random.uniform(0, max_delay)
-                    print(f"Transfer {transfer_id}: Network delay of {delay:.2f} seconds at {env.now:.2f}")
+                    # print(f"Transfer {transfer_id}: Network delay of {delay:.2f} seconds at {env.now:.2f}")
                     yield env.timeout(delay)
 
                 # Transfer packet
@@ -54,7 +55,7 @@ def file_transfer(transfer_id, file_size):
     end_time = env.now
     monitor.end_time = max(end_time, monitor.end_time)
     monitor.complete_num += 1
-    print(f"Transfer {transfer_id} completed at {end_time:.2f}, total time: {end_time - start_time:.2f} seconds")
+    # print(f"Transfer {transfer_id} completed at {end_time:.2f}, total time: {end_time - start_time:.2f} seconds")
 
 def network():
     global env, file_size, bandwidth_container, packet_loss_rate, delay_prob, max_delay, num_transfers
@@ -67,7 +68,7 @@ monitor = NetworkMonitor()
 file_size = 32.1
 total_bandwidth = 6.5 
 num_transfers = 1000
-packet_loss_rate = 0.0
+packet_loss_rate = 0.05 # 总的失败概率，1000份文件按照这个概率大约需要1050份传送
 delay_prob = 0 
 max_delay = 0
 env = simpy.Environment()
