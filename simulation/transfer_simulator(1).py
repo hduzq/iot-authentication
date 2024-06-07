@@ -65,10 +65,10 @@ def network():
         yield env.timeout(random.expovariate(1.0))
 
 monitor = NetworkMonitor()
-file_size = 32.1
-total_bandwidth = 6.5 
-num_transfers = 1000
-packet_loss_rate = 0.05 # 总的失败概率，1000份文件按照这个概率大约需要1050份传送
+file_size = 1
+total_bandwidth = 6.5
+num_transfers = 10
+packet_loss_rate = 0 # 总的失败概率，1000份文件按照这个概率大约需要1050份传送
 delay_prob = 0 
 max_delay = 0
 env = simpy.Environment()
