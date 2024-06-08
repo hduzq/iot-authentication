@@ -17,7 +17,7 @@ def file_transfer(transfer_id, file_size):
     start_time = env.now
     monitor.start_time = min(start_time, monitor.start_time)
     # print(f"Transfer {transfer_id} starting at {start_time:.2f}")
-    remain_file_size = int(file_size)
+    remain_file_size = file_size
 
     while remain_file_size > 0:
         # 这里表示获取带宽的量，和服务器的分配策略有关
@@ -32,8 +32,8 @@ def file_transfer(transfer_id, file_size):
             if random.uniform(0, 1) < packet_loss_rate/(file_size/(obtained_bandwith*transfer_chunk_time)):
                 # print(f"Transfer {transfer_id}: Packet lost at {env.now:.2f}")
                 # Simulate retransmission delay
-                # 这里假设，如果失败了，就立即全部重传
-                remain_file_size = int(file_size)
+                # 这里假设，如果失败了，就立即全部重传,如果chekpoint遇到重传平均只需重传一半
+                remain_file_size = file_size
                 yield env.timeout(0)
             else:
                 # Simulate potential network delay
@@ -65,10 +65,10 @@ def network():
         yield env.timeout(random.expovariate(1.0))
 
 monitor = NetworkMonitor()
-file_size = 1
+file_size =20
 total_bandwidth = 6.5
-num_transfers = 10
-packet_loss_rate = 0 # 总的失败概率，1000份文件按照这个概率大约需要1050份传送
+num_transfers = 1000
+packet_loss_rate = 0.05 # 总的失败概率，1000份文件按照这个概率大约需要1050份传送
 delay_prob = 0 
 max_delay = 0
 env = simpy.Environment()

@@ -13,7 +13,7 @@ line4 = [l4 + av for l4, av in zip(line4, add_values)]
 line5 = [l5 + av for l5, av in zip(line5, add_values)]
 
 # Create the plot
-plt.figure(figsize=(8, 6))
+plt.figure(figsize=(10, 6))
 
 
 # Plot each line with thicker lines
@@ -24,7 +24,7 @@ plt.plot(x, line3, marker='o', label='Scheme 3', linewidth=2.5)
 plt.plot(x, line5, marker='o', label='Scheme 4', linewidth=2.5)
 
 # Customize the plot
-plt.xlabel('# of devices', fontsize=20)
+plt.xlabel('Number of devices', fontsize=20)
 plt.ylabel('Update Time (seconds)', fontsize=20)
 plt.legend()
 plt.grid(True)
@@ -34,4 +34,5 @@ plt.grid(True)
 plt.xticks(fontsize=15)
 plt.yticks(fontsize=15)
 # Show the plot
+plt.savefig('line_pic_time.pdf', format='pdf')
 plt.show()
