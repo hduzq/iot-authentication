@@ -13,10 +13,10 @@ plt.figure(figsize=(10, 6))
 
 # Plot each line with thicker lines
 plt.plot(x, line1, marker='o', label='Our Scheme', linewidth=2.5)
-plt.plot(x, line2, marker='o', label='Scheme 1', linewidth=2.5)
-plt.plot(x, line4, marker='o', label='Scheme 2', linewidth=2.5)
-plt.plot(x, line3, marker='o', label='Scheme 3', linewidth=2.5)
-plt.plot(x, line5, marker='o', label='Scheme 4', linewidth=2.5)
+plt.plot(x, line2, marker='o', label='BL_1', linewidth=2.5)
+plt.plot(x, line4, marker='o', label='BL_2', linewidth=2.5)
+plt.plot(x, line3, marker='o', label='BL_3', linewidth=2.5)
+plt.plot(x, line5, marker='o', label='BL_4', linewidth=2.5)
 
 # Customize the plot
 plt.xlabel('Number of devices', fontsize=20)

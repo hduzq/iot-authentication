@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Define the data
-categories = ['OTA-Key', 'Scheme 1', 'Scheme 2', 'Scheme 3', 'Scheme 4']
+categories = ['OTA-Key', 'BL_1', 'BL_2', 'BL_3', 'BL_4']
 group1 = [1.47, 1.52, 1.42, 1.53]
 group2 = [11.1676, 33.6574, 176.866, 78.2342]
 group3 = [11.1366, 33.1772, 175.77474, 76.9358]
@@ -10,7 +10,7 @@ group4 = [2.9436, 6.9728, 35.7854, 15.7054]
 group5 = [3.04244, 6.73072, 35.8326, 15.9902]
 
 # Combine all groups into a list for easier plotting
-all_groups = [group1, group2, group3, group4, group5]
+all_groups = [group1, group2, group4,group3, group5]
 
 # Set the positions and width for the bars
 bar_width = 0.15
